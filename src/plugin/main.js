@@ -251,16 +251,12 @@ class AnimatedTiles extends Phaser.Plugins.ScenePlugin {
 
     /** Removes animated tiles that are on the map */
     removeMap(map) {
-        const index = this.animatedTiles.findIndex(
-            (data) => data.map === map
-        );
+        const layerIndex = map.currentLayerIndex;
+        this.animatedTiles = this.animatedTiles.filter((data) => data.map.layerIndex !== layerIndex);
+    }
 
-        if (index === -1) {
-            console.error("Removing animated tiles from the map was unsuccessful: map wasn't found!")
-            return
-        };
-
-        this.animatedTiles.splice(index, 1)
+    reset() {
+        this.animatedTiles = [];
     }
 
     //  Called when a Scene is destroyed by the Scene Manager. There is no coming back from a destroyed Scene, so clear up all resources here.
