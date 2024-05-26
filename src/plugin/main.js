@@ -251,8 +251,7 @@ class AnimatedTiles extends Phaser.Plugins.ScenePlugin {
 
     /** Removes animated tiles that are on the map */
     removeMap(map) {
-        const layerIndex = map.currentLayerIndex;
-        this.animatedTiles = this.animatedTiles.filter((data) => data.map.layerIndex !== layerIndex);
+        this.animatedTiles = [];
     }
 
     reset() {
