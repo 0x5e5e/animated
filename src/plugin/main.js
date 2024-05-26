@@ -57,7 +57,7 @@ class AnimatedTiles extends Phaser.Plugins.ScenePlugin {
     }
 
     // Initilize support for animated tiles on given map
-    init(map) {
+    init(map, uuid=null) {
         // TODO: Check if map is initilized already, if so do it again but overwrite the old.
         let mapAnimData = this.getAnimatedTiles(map);
         let animatedTiles = {
@@ -65,7 +65,8 @@ class AnimatedTiles extends Phaser.Plugins.ScenePlugin {
             animatedTiles: mapAnimData,
             active: true,
             rate: 1,
-            activeLayer: []
+            activeLayer: [],
+            uuid,
         }
         map.layers.forEach(() => animatedTiles.activeLayer.push(true));
         this.animatedTiles.push(animatedTiles);
@@ -250,8 +251,8 @@ class AnimatedTiles extends Phaser.Plugins.ScenePlugin {
     shutdown() {}
 
     /** Removes animated tiles that are on the map */
-    removeMap(map) {
-        this.animatedTiles = [];
+    removeMap(uuid) {
+        this.animatedTiles = this.animatedTiles.filter((map) => map.uuid !== uuid);
     }
 
     reset() {
