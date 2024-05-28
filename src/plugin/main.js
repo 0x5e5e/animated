@@ -166,56 +166,50 @@ class AnimatedTiles extends Phaser.Plugins.ScenePlugin {
         if (!this.active) {
             return;
         }
-        let animationTriggered = false;
+        this.totalTime += delta;
+
         // Elapsed time is the delta multiplied by the global rate and the scene timeScale if folowTimeScale is true
-        let globalElapsedTime = delta * this.rate * (this.followTimeScale ? this.scene.time.timeScale : 1);
-        this.animatedTiles.forEach(
-            (mapAnimData) => {
-                if (!mapAnimData.active) {
-                    return;
-                }
-                // Multiply with rate for this map
-                let elapsedTime = globalElapsedTime * mapAnimData.rate;
-                mapAnimData.animatedTiles.forEach(
-                    (animatedTile) => {
-                        // Reduce time for current tile, multiply elapsedTime with this tile's private rate
-                        animatedTile.next -= elapsedTime * animatedTile.rate;
-                        // Time for current tile is up!!!
-                        if (animatedTile.next < 0) {
-                            // Remember current frame index
-                            let currentIndex = animatedTile.currentFrame;
-                            // Remember the tileId of current tile
-                            let oldTileId = animatedTile.frames[currentIndex].tileid;
-                            // Advance to next in line
-                            let newIndex = currentIndex + 1;
-                            // If we went beyond last frame, we just start over
-                            if (newIndex > (animatedTile.frames.length - 1)) {
-                                newIndex = 0;
-                            }
-                            // Set lifelength for current frame
-                            animatedTile.next = animatedTile.frames[newIndex].duration;
-                            // Set index of current frame
-                            animatedTile.currentFrame = newIndex;
-                            // Store the tileId (gid) we will shift to
-                            // Loop through all tiles (via layers)
-                            //this.updateLayer
-                            animatedTile.tiles.forEach((layer, layerIndex) => {
-                                if (!mapAnimData.activeLayer[layerIndex]) {
-                                    return;
-                                }
-                                this.updateLayer(animatedTile, layer, oldTileId);
-
-                            });
-                            animationTriggered = true;
-                        }
-                    }
-                ); // animData loop
+        let globalElapsedTime =
+            delta *
+            this.rate *
+            (this.followTimeScale ? this.scene.time.timeScale : 1);
+        this.animatedTiles.forEach((mapAnimData) => {
+            if (!mapAnimData.active) {
+                return;
             }
-        ); // Map loop
-
-        if (animationTriggered) {
-            this.scene.events.emit(Events.TILE_ANIMATION_UPDATE);
-        }
+            // Multiply with rate for this map
+            let elapsedTime = globalElapsedTime * mapAnimData.rate;
+            mapAnimData.animatedTiles.forEach((animatedTile) => {
+                // Reduce time for current tile, multiply elapsedTime with this tile's private rate
+                animatedTile.next -= elapsedTime * animatedTile.rate;
+                // Time for current tile is up!!!
+                if (animatedTile.next < 0) {
+                    // Remember current frame index
+                    let currentIndex = animatedTile.currentFrame;
+                    // Remember the tileId of current tile
+                    let oldTileId = animatedTile.frames[currentIndex].tileid;
+                    // Advance to next in line
+                    let newIndex = currentIndex + 1;
+                    // If we went beyond last frame, we just start over
+                    if (newIndex > animatedTile.frames.length - 1) {
+                        newIndex = 0;
+                    }
+                    // Set lifelength for current frame
+                    animatedTile.next += animatedTile.frames[newIndex].duration;
+                    // Set index of current frame
+                    animatedTile.currentFrame = newIndex;
+                    // Store the tileId (gid) we will shift to
+                    // Loop through all tiles (via layers)
+                    //this.updateLayer
+                    animatedTile.tiles.forEach((layer, layerIndex) => {
+                        if (!mapAnimData.activeLayer[layerIndex]) {
+                            return;
+                        }
+                        this.updateLayer(animatedTile, layer, oldTileId);
+                    });
+                }
+            }); // animData loop
+        }); // Map loop
     }
 
     updateLayer(animatedTile, layer, oldTileId = -1) {
