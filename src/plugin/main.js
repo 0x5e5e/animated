@@ -260,7 +260,6 @@ class AnimatedTiles extends Phaser.Plugins.ScenePlugin {
     }
 
     getAnimatedTiles(map) {
-
         // this.animatedTiles is an array of objects with information on how to animate and which tiles.
         let animatedTiles = [];
         // loop through all tilesets
@@ -268,81 +267,78 @@ class AnimatedTiles extends Phaser.Plugins.ScenePlugin {
             // Go through the data stored on each tile (not tile on the tilemap but tile in the tileset)
             (tileset) => {
                 let tileData = tileset.tileData;
-                Object.keys(tileData).forEach(
-                    (index) => {
-                        index = parseInt(index);
-                        // If tile has animation info we'll dive into it
-                        if (tileData[index].hasOwnProperty("animation")) {
-                            let animatedTileData = {
-                                index: index + tileset.firstgid, // gid of the original tile
-                                frames: [], // array of frames
-                                currentFrame: 0, // start on first frame
-                                tiles: [], // array with one array per layer with list of tiles that depends on this animation data
-                                rate: 1, // multiplier, set to 2 for double speed or 0.25 quarter speed
+                Object.keys(tileData).forEach((index) => {
+                    index = parseInt(index);
+                    // If tile has animation info we'll dive into it
+                    if (tileData[index].hasOwnProperty("animation")) {
+                        let animatedTileData = {
+                            index: index + tileset.firstgid, // gid of the original tile
+                            frames: [], // array of frames
+                            currentFrame: 0, // start on first frame
+                            tiles: [], // array with one array per layer with list of tiles that depends on this animation data
+                            rate: 1, // multiplier, set to 2 for double speed or 0.25 quarter speed
+                        };
+                        // push all frames to the animatedTileData
+                        tileData[index].animation.forEach((frameData) => {
+                            let frame = {
+                                duration: frameData.duration,
+                                tileid: frameData.tileid + tileset.firstgid,
                             };
-                            // push all frames to the animatedTileData
-                            tileData[index].animation.forEach(
-                                (frameData) => {
-                                    let frame = {
-                                        duration: frameData.duration,
-                                        tileid: frameData.tileid + tileset.firstgid
-                                    };
-                                    animatedTileData.frames.push(frame)
-                                });
-                            // time until jumping to next frame
-                            animatedTileData.next = animatedTileData.frames[0].duration;
-
-                            // set correct currentFrame if animation starts with different tile than the one with animation flag
-                            const firstFrame = animatedTileData.frames.findIndex(f => f.tileid === index + tileset.firstgid);
-                            if (firstFrame !== -1) {
-                              animatedTileData.currentFrame = firstFrame;
+                            animatedTileData.frames.push(frame);
+                        });
+                        // time until jumping to next frame
+                        animatedTileData.next =
+                            animatedTileData.frames[0].duration;
+                        // set correct currentFrame if animation starts with different tile than the one with animation flag
+                        animatedTileData.currentFrame =
+                            animatedTileData.frames.findIndex(
+                                (f) => f.tileid === index + tileset.firstgid
+                            );
+                        // Go through all layers for tiles
+                        map.layers.forEach((layer) => {
+                            //In newer version of phaser there is only one type of layer, so checking for static is breaking the plugin
+                            if (layer.tilemapLayer && layer.tilemapLayer.type) {
+                                if (
+                                    layer.tilemapLayer.type ===
+                                    "StaticTilemapLayer"
+                                ) {
+                                    // We just push an empty array if the layer is static (impossible to animate).
+                                    // If we just skip the layer, the layer order will be messed up
+                                    // when updating animated tiles and things will look awful.
+                                    animatedTileData.tiles.push([]);
+                                    return;
+                                }
                             }
 
-                            // Go through all layers for tiles
-                            map.layers.forEach(
-                                (layer) => {
-                                    if ((!layer.tilemapLayer) ||
-                                        (!layer.tilemapLayer.type)) {
-                                        // We just push an empty array if the layer is static (impossible to animate).
-                                        // If we just skip the layer, the layer order will be messed up
-                                        // when updating animated tiles and things will look awful.
-                                        animatedTileData.tiles.push([]);
-                                        return;
+                            // tiles array for current layer
+                            let tiles = [];
+                            // loop through all rows with tiles...
+                            layer.data.forEach((tileRow) => {
+                                // ...and loop through all tiles in that row
+                                tileRow.forEach((tile) => {
+                                    // Tiled start index for tiles with 1 but animation with 0. Thus that wierd "-1"
+                                    if (
+                                        tile.index - tileset.firstgid ===
+                                        index
+                                    ) {
+                                        tiles.push(tile);
                                     }
-                                    // tiles array for current layer
-                                    let tiles = [];
-                                    // loop through all rows with tiles...
-                                    layer.data.forEach(
-                                        (tileRow) => {
-                                            // ...and loop through all tiles in that row
-                                            tileRow.forEach(
-                                                (tile) => {
-                                                    // Tiled start index for tiles with 1 but animation with 0. Thus that wierd "-1"
-                                                    if ((tile.index - tileset.firstgid) === index) {
-                                                        tiles.push(tile);
-                                                    }
-                                                }
-                                            );
-                                        }
-                                    );
-                                    // add the layer's array with tiles to the tiles array.
-                                    // this will make it possible to control layers individually in the future
-                                    animatedTileData.tiles.push(tiles);
-                                }
-                            );
-                            // animatedTileData is finished for current animation, push it to the animatedTiles-property of the plugin
-                            animatedTiles.push(animatedTileData);
-                        }
+                                });
+                            });
+                            // add the layer's array with tiles to the tiles array.
+                            // this will make it possible to control layers individually in the future
+                            animatedTileData.tiles.push(tiles);
+                        });
+                        // animatedTileData is finished for current animation, push it to the animatedTiles-property of the plugin
+                        animatedTiles.push(animatedTileData);
                     }
-                );
+                });
             }
         );
-        map.layers.forEach(
-            (layer, layerIndex) => {
-                // layer indices array of booleans whether to animate tiles on layer or not
-                this.activeLayer[layerIndex] = true;
-            }
-        );
+        map.layers.forEach((layer, layerIndex) => {
+            // layer indices array of booleans whether to animate tiles on layer or not
+            this.activeLayer[layerIndex] = true;
+        });
 
         return animatedTiles;
     }
