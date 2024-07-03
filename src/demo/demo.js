@@ -8,6 +8,7 @@ export default class Demo extends Phaser.Scene {
         this.load.image('tiles', './assets/tiles.png');
         this.load.image('super-mario-16bit', './assets/super-mario-16bit.png');
         this.load.scenePlugin('AnimatedTiles', 'AnimatedTiles.js', 'animatedTiles', 'animatedTiles');
+        console.log("TEST");
     }
 
     create() {
